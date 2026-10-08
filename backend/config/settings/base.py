@@ -118,20 +118,40 @@ ASGI_APPLICATION = "config.asgi.application"
 # ─────────────────────────────────────────────────────────────────────────────
 # Database — PostgreSQL 15
 # ─────────────────────────────────────────────────────────────────────────────
-DATABASES = {
-    "default": {
-        "ENGINE": "django.db.backends.postgresql",
-        "NAME": config("POSTGRES_DB", default="mothercare"),
-        "USER": config("POSTGRES_USER", default="mothercare_user"),
-        "PASSWORD": config("POSTGRES_PASSWORD", default="mothercare_secret"),
-        "HOST": config("POSTGRES_HOST", default="localhost"),
-        "PORT": config("POSTGRES_PORT", default="5432"),
-        "CONN_MAX_AGE": 60,  # Connection pooling: reuse connections for 60 seconds
-        "OPTIONS": {
-            "connect_timeout": 10,
-        },
+import urllib.parse
+
+db_url = config("DATABASE_URL", default="")
+if db_url:
+    url = urllib.parse.urlparse(db_url)
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": url.path[1:],
+            "USER": url.username or "",
+            "PASSWORD": url.password or "",
+            "HOST": url.hostname or "localhost",
+            "PORT": str(url.port or "5432"),
+            "CONN_MAX_AGE": 60,
+            "OPTIONS": {
+                "connect_timeout": 10,
+            },
+        }
     }
-}
+else:
+    DATABASES = {
+        "default": {
+            "ENGINE": "django.db.backends.postgresql",
+            "NAME": config("POSTGRES_DB", default="mothercare"),
+            "USER": config("POSTGRES_USER", default="mothercare_user"),
+            "PASSWORD": config("POSTGRES_PASSWORD", default="mothercare_secret"),
+            "HOST": config("POSTGRES_HOST", default="localhost"),
+            "PORT": config("POSTGRES_PORT", default="5432"),
+            "CONN_MAX_AGE": 60,
+            "OPTIONS": {
+                "connect_timeout": 10,
+            },
+        }
+    }
 
 # ─────────────────────────────────────────────────────────────────────────────
 # Password Validation & Hashing
